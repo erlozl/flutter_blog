@@ -67,7 +67,23 @@ class SessionUser {
     // 3. 응답
   }
 
-  Future<void> logout() async {}
+  Future<void> logout() async {
+    this.jwt = null;
+    this.isLogin = false;
+    this.user = null;
+
+    await secureStorage.delete(key: "jwt"); //
+    // await를 붙이는 이유는?  io가 발생하니까
+
+    // 하나의 트랜잭션이 만들어지는것임
+    Navigator.pushNamedAndRemoveUntil(
+      mContext!,
+      "/login",
+      (route) => false,
+    );
+    // 현재 라우트 스택에서 어떤 라우트를 남길지 결정
+    // false = 이전 라우트 다 제거
+  }
 }
 
 // 2. 창고 (stateNotifier가 아니라서 - 즉 화면 빌드 X )
