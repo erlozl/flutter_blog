@@ -74,6 +74,7 @@ class SessionUser {
 
     await secureStorage.delete(key: "jwt"); //
     // await를 붙이는 이유는?  io가 발생하니까
+    // 지금까지 모든 정보 제거
 
     // 하나의 트랜잭션이 만들어지는것임
     Navigator.pushNamedAndRemoveUntil(

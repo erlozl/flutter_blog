@@ -1,9 +1,11 @@
 // 요청 순서 : View -> provider(전역, vidwModel) ㅡ> repository
 import 'package:dio/dio.dart';
+import 'package:flutter_blog/data/dto/post_request.dart';
 import 'package:flutter_blog/data/dto/response_dto.dart';
 import 'package:flutter_blog/data/dto/user_request.dart';
 import 'package:flutter_blog/data/model/post.dart';
 import 'package:flutter_blog/data/model/user.dart';
+import 'package:logger/logger.dart';
 
 import '../../_core/constants/http.dart';
 
@@ -38,28 +40,54 @@ class PostRepository {
     }
   }
 
-  Future<ResponseDTO> fetchLogin(LoginReqDTO requestDTO) async {
+  Future<ResponseDTO> fetchPost(String jwt, int id) async {
+    try {
+      // 통신
+      Response response = await dio.get("/post/$id",
+          options: Options(headers: {"Authorization": "$jwt"}));
+
+      // 응답 받은 데이터 파싱
+      ResponseDTO responseDTO = ResponseDTO.fromJson(response.data);
+      responseDTO.data = Post.fromJson(responseDTO.data);
+
+      return responseDTO;
+    } catch (e) {
+      return ResponseDTO(-1, "게시글 한건 불러오기 실패", null);
+    }
+  }
+
+  Future<ResponseDTO> savePost(
+      String jwt, PostSaveReqDTO postSaveReqDTO) async {
     // 통신은 try Catch로 무조건 묶기
     try {
-      final response = await dio.post("/login", data: requestDTO.toJson());
-      print(response.data);
+      // 1.통신
+      final response = await dio.post(
+        "/post",
+        data: postSaveReqDTO.toJson(),
+        options: Options(
+          headers: {
+            "Authorization": "${jwt}",
+          },
+        ),
+      );
+
+      // 2. ResponseDTO 파싱
       ResponseDTO responseDTO = ResponseDTO.fromJson(response.data);
-      // responseDTO.data = User.fromJson(responseDTO.data);
+      Logger().d(responseDTO.data);
+
+      // 3. data파싱
+      Post post = Post.fromJson(responseDTO.data);
       // 프론트엔드역량
 
-      final jwt = response.headers["Authorization"];
-
-      // List<String>? = 정확한 타입
-      if (jwt != null) {
-        responseDTO.token = jwt.first;
-      }
-
+      // 파싱된 데이터를 다시 공통 DTO로 덮어씌기
       // 현재 data타입은 dynamic, User 객체는 자바로 치면 object
+      responseDTO.data = post;
+
       return responseDTO;
       // ㅡ> 응답 바디
     } catch (e) {
       //200이 아니면 catch로 감
-      return ResponseDTO(-1, "유저네임 혹은 패스워드가 틀렸습니다", null);
+      return ResponseDTO(-1, "게시글 쓰기 실패", null);
     }
   }
 }
